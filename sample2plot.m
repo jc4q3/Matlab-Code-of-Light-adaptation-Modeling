@@ -136,7 +136,7 @@ ylabel('pmf');
 figure
 plot(t,N)
 xlabel('time');
-ylabel('r14');
+ylabel('r_q');
 
 n=length(Ydata);
 MAPE=1/n*sum(abs((Ydata-Yold)./Yold))*100
