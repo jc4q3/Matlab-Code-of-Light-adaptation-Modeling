@@ -1,17 +1,17 @@
-function [Fluo,x,beta,R_psbs,R_VDE,delta_psi,delta_pH_part,pmf]=PulseVariedflueqnRK4_PSBS(k,t) 
+function [Fluo,x,beta,R_psbs,R_VDE,delta_psi,delta_pH_part,pmf,N]=PulseVariedflueqnRK4_PSBS(k,t) 
 h=0.0001;
 samplinginterval=t(2)-t(1);
 t_end=394;
 t_integration=h:h:t_end;
 n=length(t_integration);
-x=zeros(13,n); 
+x=zeros(14,n); 
 
 % %dark adaptation initial
-x(5,1)=9.04;
-x(6,1)=7.8;
-x(7,1)= -0.1154;
-x(8,1)=0.2376;
-x(9,1)=0.0473;
+x(6,1)=9.04;
+x(7,1)=7.8;
+x(8,1)= -0.094;
+x(9,1)=0.22;
+x(10,1)=0.051;
 
 
 %Light adaptation initial
@@ -33,7 +33,7 @@ Photon=6.9982*10^9;
 % N_reactionCenter=1.2*10^11;
 N_reactionCenter=2.5*10^6;
 % N_photonRection=Photon/N_reactionCenter;
-N_photonRection=2.7993*10^3*(1000/2500);
+N_photonRection=1.12*10^3;
 % N_reactionCenter=2.5*10^6;
 % % photons in one reaction center are 2.7993*10^3 photons/s;
 % % NADP+ concentration is 0.6 to 0.8 mM.
@@ -53,9 +53,9 @@ pH0=7.8;
 
 %constant illumination
 n_constant=length(h:h:300);
-
+addtime=0;
 % Pulse high level
-U_Pulse=4.47888*10^3*(2000/4000);
+U_Pulse=2.23944*10^3;
 
 U_total=zeros(1,2*n);
 U_total(1,1:2*n_constant)=N_photonRection;
@@ -63,8 +63,9 @@ U_total(1,1:2*n_constant)=N_photonRection;
 Pulse=ones(1,2*length(h:h:1))*U_Pulse;
 Constant=ones(1,2*length(h:h:30))*N_photonRection;
 PulseConstant=[Pulse Constant];
-U_total(1,2*n_constant+1:end)=[PulseConstant PulseConstant PulseConstant Pulse];
-
+U_total(1,2*n_constant+1:end-2*addtime*1/h)=[PulseConstant PulseConstant PulseConstant Pulse];
+% U_total(1,2*n_constant+1:end-2*addtime*1/h)=10;
+U_total(1,end-2*addtime*1/h+1:end)=N_photonRection;
 
 kp_VDE=10^(-6.5);
 np_VDE=4;
@@ -78,11 +79,15 @@ pKa_buffer=5.5;
 % np_VDE=4;
 for i=1:n-1
     % PRBS
-    [S(:,1)] = Variedflueqn(t_integration(i),x(:,i),k,U_total(:,2*i));
-    [S(:,2)] = Variedflueqn(t_integration(i)+h/2,x(:,i)+S(:,1)*(1/2)*h,k,U_total(:,2*i+1));
-    [S(:,3)] = Variedflueqn(t_integration(i)+h/2,x(:,i)+S(:,2)*(1/2)*h,k,U_total(:,2*i+1));
-    [S(:,4)] = Variedflueqn(t_integration(i)+h,x(:,i)+S(:,3)*h,k,U_total(:,2*i+2));
+%     if U_total(:,2*i)==10
+%         x(2,i)=0;
+%     end
+    [S(:,1),N1] = Variedflueqn(t_integration(i),x(:,i),k,U_total(:,2*i));
+    [S(:,2),N2] = Variedflueqn(t_integration(i)+h/2,x(:,i)+S(:,1)*(1/2)*h,k,U_total(:,2*i+1));
+    [S(:,3),N3] = Variedflueqn(t_integration(i)+h/2,x(:,i)+S(:,2)*(1/2)*h,k,U_total(:,2*i+1));
+    [S(:,4),N4] = Variedflueqn(t_integration(i)+h,x(:,i)+S(:,3)*h,k,U_total(:,2*i+2));
     x(:,i+1) = x(:,i) + h*(S(:,1)+2*S(:,2)+2*S(:,3)+S(:,4))/6;
+    N(:,i+1)=(N1+N2+N3+N4)/4;
 %     if x(1,i+1)<0
 %         x(1,i+1)=0;
 %     end
@@ -110,27 +115,27 @@ w=round(1:samplinginterval/h:n);
 % pmf=zeros(1,w);
 
 x=x(:,w);
-
+N=N(:,w);
 unit3=V_lumen*constant;
 c_K=0.15;
 c_Cl=0.075;
-delta_psi=e*(x(7,:)+x(8,:)-x(9,:)-c_K+c_Cl)*constant*V_lumen/capacitance;
+delta_psi=e*(x(8,:)+x(9,:)-x(10,:)-c_K+c_Cl)*constant*V_lumen/capacitance;
 %     delta_psi(:,i+1)=0;
-delta_pH_part=2.3*R*Temp/F*(7.8-x(6,:));
+delta_pH_part=2.3*R*Temp/F*(7.8-x(7,:));
 pmf=delta_psi+delta_pH_part;
 %     beta(i+1)=0.03;
 
 % beta=zeros(1,length(w));
 % beta(find(beta==0))=0.3;
 
-beta=2.303*10.^(-x(6,:))+(0.69078*10^(-pKa_buffer)*10.^(-x(6,:)))./(10^(-pKa_buffer)+10.^(-x(6,:))).^2;
+beta=2.303*10.^(-x(7,:))+(0.69078*10^(-pKa_buffer)*10.^(-x(7,:)))./(10^(-pKa_buffer)+10.^(-x(7,:))).^2;
     
-R_psbs=10.^(-x(6,:)*np_psbs)./(kp^np_psbs+10.^(-x(6,:)*np_psbs));
-R_VDE=10.^(-x(6,:)*np_VDE)./(kp_VDE^np_VDE+10.^(-x(6,:)*np_VDE));
+R_psbs=10.^(-x(7,:)*np_psbs)./(kp^np_psbs+10.^(-x(7,:)*np_psbs));
+R_VDE=10.^(-x(7,:)*np_VDE)./(kp_VDE^np_VDE+10.^(-x(7,:)*np_VDE));
 %     if t_integration(i)>10
 %         x(7,i+1)=k(15)*R_psbs(i+1)*(x(9,i+1)+x(10,i+1))+1;
 %     else
 
 % accumulated_H=10.^(-x(6,:))+0.3*10.^(-x(6,:))./(10^(-5.5)+10.^(-x(6,:)))-10^(-pH0)-0.3*10^(-pH0)/(10^(-5.5)+10^(-pH0));
 
-Fluo=k(31)*(k(2)*x(1,:)*N_reactionCenter)/(area*constant/10^6)+k(32);
+Fluo=k(31)*(k(2)*x(2,:)*N_reactionCenter)/(area*constant/10^6)+k(32);
