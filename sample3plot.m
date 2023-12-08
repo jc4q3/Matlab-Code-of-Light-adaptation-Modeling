@@ -8,45 +8,47 @@ tt=[dtt1:dtt1:1,1+dtt2:dtt2:300,300+dtt1:dtt1:301,301+dtt2:dtt2:331,331+dtt1:dtt
 Ydata=[Y(v);Y(1001:30900);Y(30900+v);Y(31901:34900);Y(34900+v);Y(35901:38900);Y(38900+v);Y(39901:42900);Y(42900+v)]';
 samplinginterval=0.01;
 t=samplinginterval:samplinginterval:394;
-k=[0.00167329
-13.45464086
-151.8544403
-0.588945609
-580.9436628
-4196.281928
-971.3031091
-571.7923856
-619.4650614
-174.1330374
-5.241173076
-165.2368658
-51.78179117
-4.542231291
-19.65396685
-63.09051233
-0.854439311
-0.004136785
-0.002584267
-24.12541449
-3.363765926
-47.01892247
-64.01218561
-1299.629788
-1.146396523
-1.616404233
-1.49104289
-1.218063986
-26.57900245
-41.05731863
-11.28942854
-250.6944121
+k=[0.004127
+40.61218322
+3783.587551
+1647.293119
+1984.354287
+4786.446249
+3093.145259
+952.068835
+635.6855735
+557.5383676
+5.241172
+12.18823
+162.216
+46.63351
+0.127509237
+753.2795113
+107.648448
+0.239459292
+1.3880976
+0.015264907
+0.007239583
+0.093054
+10.84008056
+1299.509
+1.147553397
+1.616404
+74.95251815
+1.218064
+5.196011658
+137.0297
+128.1171819
+178.0447831
+11.7365855
+2.820531063
 ];
 
-[Fluo,x,beta,R_psbs,R_VDE,delta_psi,delta_pH_part,pmf]=PulseVariedflueqnRK4_PSBS(k,t);
+[Fluo,x,beta,R_psbs,R_VDE,delta_psi,delta_pH_part,pmf,N]=PulseVariedflueqnRK4_PSBS(k,t);
 Yold=Fluo;
 figure(1)
 plot(t,Ydata);
-% ylim([40 500])
+
 hold on
 plot(t,Yold);
 legend('Fluorescence experimental data','Fluorescence estimated');
@@ -54,14 +56,9 @@ xlabel('time');
 ylabel('Fluorescence');
 
 figure(2)
-semilogx(t,Ydata);
-% ylim([40 500])
-hold on
-semilogx(t,Yold);
-legend('Fluorescence experimental data','Fluorescence estimated');
+plot(t,x(2,:))
 xlabel('time');
-ylabel('Fluorescence');
-
+ylabel('P680^*');
 
 figure(3)
 subplot(3,3,1)
@@ -69,23 +66,23 @@ plot(t,x(1,:))
 xlabel('time');
 ylabel('A^*');
 subplot(3,3,2)
-plot(t,x(2,:))
+plot(t,x(3,:))
 xlabel('time');
 ylabel('QA^-');
 subplot(3,3,3)
-plot(t,x(3,:))
+plot(t,x(4,:))
 xlabel('time');
 ylabel('QB^-');
 subplot(3,3,4)
-plot(t,x(4,:))
+plot(t,x(5,:))
 xlabel('time');
 ylabel('QB^2^-');
 subplot(3,3,5)
-plot(t,x(5,:))
+plot(t,x(6,:))
 xlabel('time');
 ylabel('PQ');
 subplot(3,3,6)
-plot(t,x(6,:))
+plot(t,x(7,:))
 xlabel('time');
 ylabel('pH');
 subplot(3,3,7)
@@ -104,27 +101,27 @@ ylabel('R_V_D_E');
 
 figure(4)
 subplot(3,3,1)
-plot(t,x(8,:))
+plot(t,x(9,:))
 xlabel('time');
 ylabel('K^+');
 subplot(3,3,2)
-plot(t,x(9,:))
+plot(t,x(10,:))
 xlabel('time');
 ylabel('Cl^-');
 subplot(3,3,3)
-semilogx(t,x(10,:))
+semilogx(t,x(11,:))
 xlabel('time');
 ylabel('Anth');
 subplot(3,3,4)
-semilogx(t,x(11,:))
+semilogx(t,x(12,:))
 xlabel('time');
 ylabel('Zea');
 subplot(3,3,5)
-semilogx(t,x(12,:))
+semilogx(t,x(13,:))
 xlabel('time');
 ylabel('Lut');
 subplot(3,3,6)
-plot(t,x(13,:))
+plot(t,x(14,:))
 xlabel('time');
 ylabel('A_C');
 subplot(3,3,7)
@@ -140,6 +137,11 @@ plot(t,pmf)
 xlabel('time');
 ylabel('pmf');
 
+
+figure
+plot(t,N)
+xlabel('time');
+ylabel('r14');
 
 n=length(Ydata);
 MAPE=1/n*sum(abs((Ydata-Yold)./Yold))*100
